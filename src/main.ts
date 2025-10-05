@@ -1,9 +1,10 @@
+import fastifyCookie, { FastifyCookieOptions } from '@fastify/cookie';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,7 +13,14 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // Enable global validation pipe with class-validator and class-transformer
+  await app.register<FastifyCookieOptions>(
+    // TODO: Find the correct typing for this later on
+    fastifyCookie as unknown as Parameters<typeof app.register>[0],
+    {
+      secret: process.env.COOKIE_SECRET,
+    },
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -10,14 +10,120 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Country {
+  USA
+  LEB
+  UAE
+}
+
+enum Position {
+  EXECUTIVE
+  MANAGER
+  STAFF
+  INTERN
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
 // Example User model
 model User {
+  id        Int    @id @default(autoincrement())
+  email     String @unique
+  firstName String
+  lastName  String
+  role      Role   @default(USER)
+
+  auths    Auth[]
+  employee Employee?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // emailVerificationTokens EmailVerificationToken[]
+}
+
+model Auth {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
   password  String
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/**
+ * For V2
+ */
+// enum VerificationPurpose {
+//   SIGNUP
+// }
+
+// model EmailVerificationToken {
+//   id         Int                 @id @default(autoincrement())
+//   codeHash   String
+//   purpose    VerificationPurpose @default(SIGNUP)
+//   expiresAt  DateTime            @default(dbgenerated("now() + interval '3 hours'"))
+//   consumedAt DateTime?
+
+//   userId Int
+//   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+model Employee {
+  id       Int      @id @default(autoincrement())
+  salary   Float
+  hireDate DateTime @default(now())
+  position Position
+
+  branch   Branch @relation(fields: [branchId], references: [id])
+  branchId Int
+
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  addressId Int
+  address   Address @relation(fields: [addressId], references: [id])
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Department {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  Employee Employee[]
+  branches Branch[]
+}
+
+model Branch {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  addressId    Int         @unique
+  address      Address     @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  Employee     Employee[]
+  Department   Department? @relation(fields: [departmentId], references: [id])
+  departmentId Int?
+}
+
+model Address {
+  id      Int     @id @default(autoincrement())
+  street  String
+  city    String
+  state   String
+  zipCode String
+  country Country
+
+  branches  Branch[]
+  employees Employee[]
 }
